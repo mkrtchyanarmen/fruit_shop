@@ -275,20 +275,20 @@ export function SalesFlow({ compactMobileChrome = false }: SalesFlowProps) {
                   key={fruit.id}
                   type="button"
                   onClick={() => openDialog(fruit)}
-                  className="group relative aspect-square overflow-hidden rounded-lg border bg-muted text-left shadow-sm transition hover:ring-2 hover:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:rounded-xl"
+                  className="group relative aspect-square overflow-hidden rounded-lg border bg-muted text-left shadow-sm transition hover:ring-2 hover:ring-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:rounded-xl bg-white p-4"
                 >
                   {fruit.image?.url ? (
                     <Image
                       src={`${STRAPI_BASE_URL}${fruit.image.url}`}
                       alt={fruit.name}
                       fill
-                      className="object-cover transition group-hover:scale-105"
+                      className="object-contain transition group-hover:scale-105"
                       sizes="(max-width: 640px) 50vw, 20vw"
                       priority={compactMobileChrome}
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-muted text-4xl text-muted-foreground">
-                      🍎
+                      Missing image
                     </div>
                   )}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-1.5 pb-1.5 pt-6 sm:px-2 sm:pb-2 sm:pt-8">
