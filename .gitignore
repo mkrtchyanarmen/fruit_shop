@@ -5,5 +5,16 @@ node_modules
 dist
 .cache
 .turbo
+
+# Strapi
+apps/strapi/.env
 apps/strapi/.tmp
+apps/strapi/build
 apps/strapi/public/uploads
+
+# Next.js
+apps/nextjs/.env.local
+apps/nextjs/.next
+
+# General
+.DS_Store
