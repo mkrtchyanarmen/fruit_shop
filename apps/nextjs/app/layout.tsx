@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import "@/app/globals.css"
+import { MainShell } from "@/components/main-shell"
 import { Providers } from "@/components/providers"
 import { Navbar } from "@/components/navbar"
 
@@ -19,7 +20,7 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen bg-background">
             <Navbar />
-            <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+            <MainShell>{children}</MainShell>
           </div>
         </Providers>
       </body>

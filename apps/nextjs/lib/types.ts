@@ -11,6 +11,9 @@ export interface DailyComputedSummary {
   totalRevenue: number
   totalStockCost: number
   totalTransportCost: number
+  /** Միջին ինքնարժեքով հաշվարկված վաճառքի ավելացված արժեք (markup), ոչ ամբողջ եկամուտը */
+  soldMarkup: number
+  /** Նախկին ամփոփիչ՝ օրվա մուտքերի ծախսը և տրանսպորտը հանած */
   netProfit: number
   soldBreakdown: BreakdownRow[]
   receivedBreakdown: BreakdownRow[]

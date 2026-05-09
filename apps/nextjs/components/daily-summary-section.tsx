@@ -31,7 +31,7 @@ export function DailySummarySection({ summary, isLoading }: DailySummarySectionP
         totalRevenue={summary.totalRevenue}
         totalStockCost={summary.totalStockCost}
         totalTransportCost={summary.totalTransportCost}
-        netProfit={summary.netProfit}
+        soldMarkup={summary.soldMarkup}
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <BreakdownTable

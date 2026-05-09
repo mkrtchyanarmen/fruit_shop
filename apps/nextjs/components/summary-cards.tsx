@@ -5,24 +5,24 @@ interface SummaryCardsProps {
   totalRevenue: number
   totalStockCost: number
   totalTransportCost: number
-  netProfit: number
+  soldMarkup: number
 }
 
 export function SummaryCards({
   totalRevenue,
   totalStockCost,
   totalTransportCost,
-  netProfit,
+  soldMarkup,
 }: SummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard label="Եկամուտ" value={totalRevenue} />
+      <MetricCard label="Եկամուտ (վաճառք)" value={totalRevenue} />
       <MetricCard label="Ապրանքի ինքնարժեք" value={totalStockCost} />
       <MetricCard label="Տրանսպորտի ծախս" value={totalTransportCost} />
       <MetricCard
-        label="Մաքուր շահույթ"
-        value={netProfit}
-        valueClassName={netProfit >= 0 ? "text-emerald-600" : "text-red-600"}
+        label="Շահույթ (ավելացված արժեք)"
+        value={soldMarkup}
+        valueClassName={soldMarkup >= 0 ? "text-emerald-600" : "text-red-600"}
       />
     </div>
   )
