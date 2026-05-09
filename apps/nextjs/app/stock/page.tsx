@@ -1,10 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { allocateTransportAmongLines } from "@fruit-shop/allocate-transport"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { Controller, useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { EmptyShopState, PageError } from "@/components/page-state"
 import { FruitSelect } from "@/components/fruit-select"
 import { Button } from "@/components/ui/button"
@@ -24,19 +22,23 @@ import { useDailyData } from "@/hooks/use-daily-data"
 import { useShopContext } from "@/hooks/use-shop-context"
 import { STRAPI_BASE_URL } from "@/lib/constants"
 import { getTodayLocalIsoDate } from "@/lib/date"
-import { formatCurrency, formatNumber } from "@/lib/format"
-import { createStockArrival, getFruits } from "@/lib/strapi"
+import { formatCurrency, formatFruitUnit, formatNumber } from "@/lib/format"
+import { createStockArrivalsBulk, getFruits } from "@/lib/strapi"
 import type { Fruit } from "@fruit-shop/types"
 
-const stockSchema = z.object({
-  date: z.string().min(1, "Ամսաթիվը պարտադիր է"),
-  fruitId: z.string().min(1, "Ընտրեք միրգ"),
-  quantity: z.coerce.number().positive("Քանակը պետք է լինի զրոյից մեծ"),
-  unitCost: z.coerce.number().nonnegative("Միավորի արժեքը չի կարող բացասական լինել"),
-  transportCost: z.coerce.number().nonnegative("Տրանսպորտի ծախսը չի կարող բացասական լինել"),
-})
+function newLineKey() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
 
-type StockFormValues = z.infer<typeof stockSchema>
+type DraftLine = {
+  key: string
+  fruitId: string
+  quantity: number
+  unitCost: number
+}
 
 export default function StockPage() {
   const today = getTodayLocalIsoDate()
@@ -45,18 +47,13 @@ export default function StockPage() {
   const [fruits, setFruits] = useState<Fruit[]>([])
   const [isFruitsLoading, setIsFruitsLoading] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const { arrivals, isLoading, error, refresh } = useDailyData(date, activeShopId)
+  const [isSaving, setIsSaving] = useState(false)
+  const [lines, setLines] = useState<DraftLine[]>(() => [
+    { key: newLineKey(), fruitId: "", quantity: 1, unitCost: 0 },
+  ])
+  const [totalTransportCost, setTotalTransportCost] = useState(0)
 
-  const form = useForm<StockFormValues>({
-    resolver: zodResolver(stockSchema),
-    defaultValues: {
-      date: today,
-      fruitId: "",
-      quantity: 0,
-      unitCost: 0,
-      transportCost: 0,
-    },
-  })
+  const { arrivals, isLoading, error, refresh } = useDailyData(date, activeShopId)
 
   useEffect(() => {
     const fetchFruits = async () => {
@@ -71,33 +68,104 @@ export default function StockPage() {
     void fetchFruits()
   }, [])
 
-  const onSubmit = form.handleSubmit(async (values) => {
+  const fruitById = useMemo(() => new Map(fruits.map((f) => [f.id, f])), [fruits])
+
+  const validLines = useMemo(
+    () =>
+      lines.filter((l) => {
+        const id = Number(l.fruitId)
+        return Number.isFinite(id) && id > 0 && l.quantity > 0
+      }),
+    [lines],
+  )
+
+  const allocationPreview = useMemo(() => {
+    if (validLines.length === 0) return new Map<string, number>()
+    const inputs = validLines.map((l) => ({
+      quantity: l.quantity,
+      unitCost: Math.max(0, l.unitCost),
+    }))
+    const shares = allocateTransportAmongLines(inputs, totalTransportCost)
+    const map = new Map<string, number>()
+    validLines.forEach((l, i) => {
+      map.set(l.key, shares[i] ?? 0)
+    })
+    return map
+  }, [validLines, totalTransportCost])
+
+  const updateLine = (key: string, patch: Partial<DraftLine>) => {
+    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)))
+  }
+
+  const onFruitChange = (key: string, fruitId: string) => {
+    const prev = lines.find((l) => l.key === key)
+    const patch: Partial<DraftLine> = { fruitId }
+    if (fruitId && prev?.fruitId !== fruitId) {
+      patch.quantity = 1
+    }
+    updateLine(key, patch)
+  }
+
+  const addLine = () => {
+    setLines((prev) => [
+      ...prev,
+      { key: newLineKey(), fruitId: "", quantity: 1, unitCost: 0 },
+    ])
+  }
+
+  const removeLine = (key: string) => {
+    setLines((prev) => {
+      if (prev.length <= 1) return prev
+      return prev.filter((l) => l.key !== key)
+    })
+  }
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!activeShopId) return
     setSubmitError(null)
+
+    if (validLines.length === 0) {
+      setSubmitError("Ավելացրեք առնվազն մեկ տող՝ ընտրեք միրգ և մուտքագրեք քանակ (միավորի արժեքը կարող է լինել 0)։")
+      return
+    }
+
+    if (totalTransportCost < 0 || Number.isNaN(totalTransportCost)) {
+      setSubmitError("Ընդհանուր տրանսպորտի գումարը պետք է լինի ոչ բացասական։")
+      return
+    }
+
+    for (const l of validLines) {
+      if (l.unitCost < 0 || Number.isNaN(l.unitCost)) {
+        setSubmitError("Միավորի արժեքը չի կարող բացասական լինել։")
+        return
+      }
+    }
+
+    setIsSaving(true)
     try {
-      await createStockArrival({
-        date: values.date,
-        fruitId: Number(values.fruitId),
+      await createStockArrivalsBulk({
+        date,
         shopId: activeShopId,
-        quantity: values.quantity,
-        unitCost: values.unitCost,
-        transportCost: values.transportCost,
+        totalTransportCost,
+        items: validLines.map((l) => ({
+          fruitId: Number(l.fruitId),
+          quantity: l.quantity,
+          unitCost: l.unitCost,
+        })),
       })
-      setDate(values.date)
+      setDate(date)
       await refresh()
-      form.reset({
-        ...values,
-        fruitId: "",
-        quantity: 0,
-        unitCost: 0,
-        transportCost: 0,
-      })
+      setLines([{ key: newLineKey(), fruitId: "", quantity: 1, unitCost: 0 }])
+      setTotalTransportCost(0)
     } catch (requestError) {
       setSubmitError(
         requestError instanceof Error ? requestError.message : "Մուտքը պահպանել չհաջողվեց",
       )
+    } finally {
+      setIsSaving(false)
     }
-  })
+  }
 
   return (
     <section className="space-y-4">
@@ -109,71 +177,128 @@ export default function StockPage() {
           <Card>
             <CardHeader>
               <CardTitle>Նոր մուտք գրանցել</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Ավելացրեք մի քանի միրգ, մեկ անգամ մուտքագրեք ընդհանուր տրանսպորտի ծախսը՝ այն
+                ավտոմատ կբաշխվի տողերի վրա՝ համամասնորեն (քանակ × միավորի արժեք), կամ եթե
+                արժեք չկա՝ ըստ քանակի։ Միավորը (կգ / հատ / փունջ) գալիս է մրգի քարտից Strapi-ում։
+              </p>
             </CardHeader>
             <CardContent>
-              <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={onSubmit}>
-                <div className="space-y-2">
+              <form className="space-y-6" onSubmit={(e) => void onSubmit(e)}>
+                <div className="grid max-w-md gap-2">
                   <Label htmlFor="stock-date">Ամսաթիվ</Label>
-                  <Input id="stock-date" type="date" {...form.register("date")} />
-                  {form.formState.errors.date ? (
-                    <p className="text-xs text-red-600">{form.formState.errors.date.message}</p>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  <Label>Միրգ</Label>
-                  <Controller
-                    control={form.control}
-                    name="fruitId"
-                    render={({ field }) => (
-                      <FruitSelect
-                        fruits={fruits}
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={isFruitsLoading}
-                        placeholder={isFruitsLoading ? "Մրգերի բեռնում…" : "Ընտրել միրգ"}
-                      />
-                    )}
-                  />
-                  {form.formState.errors.fruitId ? (
-                    <p className="text-xs text-red-600">{form.formState.errors.fruitId.message}</p>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stock-qty">Քանակ</Label>
-                  <Input id="stock-qty" type="number" step="0.01" {...form.register("quantity")} />
-                  {form.formState.errors.quantity ? (
-                    <p className="text-xs text-red-600">{form.formState.errors.quantity.message}</p>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stock-unit-cost">Միավորի արժեք</Label>
                   <Input
-                    id="stock-unit-cost"
+                    id="stock-date"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Label className="text-base">Մրգերի տողեր</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addLine}>
+                      Ավելացնել տող
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {lines.map((line) => {
+                      const fruit = line.fruitId ? fruitById.get(Number(line.fruitId)) : undefined
+                      const previewTransport = allocationPreview.get(line.key)
+                      return (
+                        <div
+                          key={line.key}
+                          className="grid gap-3 rounded-lg border p-4 md:grid-cols-[1fr_120px_120px_100px_auto]"
+                        >
+                          <div className="space-y-2 md:col-span-1">
+                            <Label>Միրգ</Label>
+                            <FruitSelect
+                              fruits={fruits}
+                              value={line.fruitId}
+                              onChange={(v) => onFruitChange(line.key, v)}
+                              disabled={isFruitsLoading}
+                              placeholder={isFruitsLoading ? "Մրգերի բեռնում…" : "Ընտրել միրգ"}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor={`qty-${line.key}`}>
+                              Քանակ
+                              {fruit ? ` (${formatFruitUnit(fruit.unit)})` : ""}
+                            </Label>
+                            <Input
+                              id={`qty-${line.key}`}
+                              type="number"
+                              step="0.01"
+                              min={0.01}
+                              value={line.quantity || ""}
+                              onChange={(e) =>
+                                updateLine(line.key, {
+                                  quantity: Number(e.target.value) || 0,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor={`cost-${line.key}`}>Միավորի արժեք</Label>
+                            <Input
+                              id={`cost-${line.key}`}
+                              type="number"
+                              step="0.01"
+                              min={0}
+                              value={line.unitCost || ""}
+                              onChange={(e) =>
+                                updateLine(line.key, {
+                                  unitCost: Number(e.target.value) || 0,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Տրանսպորտ (վիճակագրություն)</Label>
+                            <p className="flex h-10 items-center text-sm tabular-nums text-muted-foreground">
+                              {fruit && line.quantity > 0
+                                ? formatCurrency(previewTransport ?? 0)
+                                : "—"}
+                            </p>
+                          </div>
+                          <div className="flex items-end justify-end">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600"
+                              onClick={() => removeLine(line.key)}
+                              disabled={lines.length <= 1}
+                            >
+                              Հանել
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid max-w-md gap-2">
+                  <Label htmlFor="stock-total-transport">Ընդհանուր տրանսպորտի ծախս (դրամ)</Label>
+                  <Input
+                    id="stock-total-transport"
                     type="number"
                     step="0.01"
-                    {...form.register("unitCost")}
+                    min={0}
+                    value={totalTransportCost || ""}
+                    onChange={(e) => setTotalTransportCost(Number(e.target.value) || 0)}
                   />
-                  {form.formState.errors.unitCost ? (
-                    <p className="text-xs text-red-600">{form.formState.errors.unitCost.message}</p>
-                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    Բաշխվում է տողերի միջև՝ ըստ տողի արժեքի (քանակ × միավորի արժեք)։
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stock-transport-cost">Տրանսպորտի ծախս</Label>
-                  <Input
-                    id="stock-transport-cost"
-                    type="number"
-                    step="0.01"
-                    {...form.register("transportCost")}
-                  />
-                  {form.formState.errors.transportCost ? (
-                    <p className="text-xs text-red-600">
-                      {form.formState.errors.transportCost.message}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="md:col-span-2">
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Պահպանում…" : "Պահպանել մուտքը"}
+
+                <div>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? "Պահպանում…" : "Պահպանել բոլոր մուտքերը"}
                   </Button>
                   {submitError ? <p className="mt-2 text-sm text-red-600">{submitError}</p> : null}
                 </div>

@@ -366,6 +366,36 @@ export async function createStockArrival(payload: StockArrivalPayload) {
   })
 }
 
+export interface BulkStockLinePayload {
+  fruitId: number
+  quantity: number
+  unitCost: number
+}
+
+/** Մեկ ամսաթվի և խանութի համար՝ տրանսպորտը բաշխվում է տողերի վրա սերվերի կողմից։ */
+export async function createStockArrivalsBulk(payload: {
+  date: string
+  shopId: number
+  totalTransportCost: number
+  items: BulkStockLinePayload[]
+}) {
+  await strapiFetch("/api/stock-arrivals/bulk", {
+    method: "POST",
+    body: {
+      data: {
+        date: payload.date,
+        shop: payload.shopId,
+        totalTransportCost: payload.totalTransportCost,
+        items: payload.items.map((item) => ({
+          fruitId: item.fruitId,
+          quantity: item.quantity,
+          unitCost: item.unitCost,
+        })),
+      },
+    },
+  })
+}
+
 interface SaleItemPayload {
   date: string
   fruitId: number

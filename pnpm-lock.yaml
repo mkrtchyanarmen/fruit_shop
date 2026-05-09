@@ -17,6 +17,9 @@ importers:
 
   apps/nextjs:
     dependencies:
+      '@fruit-shop/allocate-transport':
+        specifier: workspace:*
+        version: link:../../packages/allocate-transport
       '@fruit-shop/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -136,6 +139,8 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+
+  packages/allocate-transport: {}
 
   packages/types: {}
 

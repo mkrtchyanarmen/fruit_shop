@@ -10,7 +10,10 @@ const PUBLIC_API_CONTENT_TYPES = [
 ];
 
 /** Custom controller actions beyond core CRUD */
-const PUBLIC_API_CUSTOM_ACTIONS = ['api::sale-item.sale-item.bulkCreate'];
+const PUBLIC_API_CUSTOM_ACTIONS = [
+  'api::sale-item.sale-item.bulkCreate',
+  'api::stock-arrival.stock-arrival.bulkCreate',
+];
 
 // Allow image upload + read so the admin UI can attach images to fruits and the
 // frontend can fetch them through the REST API without auth.
