@@ -8,6 +8,7 @@
     "dev": "concurrently -n next,strapi -c blue,magenta \"pnpm dev:next\" \"pnpm dev:strapi\"",
     "build:next": "pnpm --filter nextjs build",
     "build:strapi": "pnpm --filter strapi build",
+    "run:strapi": "pnpm --filter strapi start",
     "seed": "pnpm --filter strapi seed",
     "seed:reset": "pnpm --filter strapi seed:reset"
   },
