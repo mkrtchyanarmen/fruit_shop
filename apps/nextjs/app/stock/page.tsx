@@ -29,11 +29,11 @@ import { createStockArrival, getFruits } from "@/lib/strapi"
 import type { Fruit } from "@fruit-shop/types"
 
 const stockSchema = z.object({
-  date: z.string().min(1, "Date is required"),
-  fruitId: z.string().min(1, "Fruit is required"),
-  quantity: z.coerce.number().positive("Quantity must be greater than zero"),
-  unitCost: z.coerce.number().nonnegative("Unit cost cannot be negative"),
-  transportCost: z.coerce.number().nonnegative("Transport cost cannot be negative"),
+  date: z.string().min(1, "Ամսաթիվը պարտադիր է"),
+  fruitId: z.string().min(1, "Ընտրեք միրգ"),
+  quantity: z.coerce.number().positive("Քանակը պետք է լինի զրոյից մեծ"),
+  unitCost: z.coerce.number().nonnegative("Միավորի արժեքը չի կարող բացասական լինել"),
+  transportCost: z.coerce.number().nonnegative("Տրանսպորտի ծախսը չի կարող բացասական լինել"),
 })
 
 type StockFormValues = z.infer<typeof stockSchema>
@@ -94,33 +94,33 @@ export default function StockPage() {
       })
     } catch (requestError) {
       setSubmitError(
-        requestError instanceof Error ? requestError.message : "Could not save arrival",
+        requestError instanceof Error ? requestError.message : "Մուտքը պահպանել չհաջողվեց",
       )
     }
   })
 
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Stock Arrivals</h2>
+      <h2 className="text-2xl font-semibold">Ապրանքների մուտք</h2>
       {!activeShopId ? (
         <EmptyShopState />
       ) : (
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Log New Delivery</CardTitle>
+              <CardTitle>Նոր մուտք գրանցել</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={onSubmit}>
                 <div className="space-y-2">
-                  <Label htmlFor="stock-date">Date</Label>
+                  <Label htmlFor="stock-date">Ամսաթիվ</Label>
                   <Input id="stock-date" type="date" {...form.register("date")} />
                   {form.formState.errors.date ? (
                     <p className="text-xs text-red-600">{form.formState.errors.date.message}</p>
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label>Fruit</Label>
+                  <Label>Միրգ</Label>
                   <Controller
                     control={form.control}
                     name="fruitId"
@@ -130,7 +130,7 @@ export default function StockPage() {
                         value={field.value}
                         onChange={field.onChange}
                         disabled={isFruitsLoading}
-                        placeholder={isFruitsLoading ? "Loading fruits..." : "Select fruit"}
+                        placeholder={isFruitsLoading ? "Մրգերի բեռնում…" : "Ընտրել միրգ"}
                       />
                     )}
                   />
@@ -139,14 +139,14 @@ export default function StockPage() {
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="stock-qty">Quantity</Label>
+                  <Label htmlFor="stock-qty">Քանակ</Label>
                   <Input id="stock-qty" type="number" step="0.01" {...form.register("quantity")} />
                   {form.formState.errors.quantity ? (
                     <p className="text-xs text-red-600">{form.formState.errors.quantity.message}</p>
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="stock-unit-cost">Unit Cost</Label>
+                  <Label htmlFor="stock-unit-cost">Միավորի արժեք</Label>
                   <Input
                     id="stock-unit-cost"
                     type="number"
@@ -158,7 +158,7 @@ export default function StockPage() {
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="stock-transport-cost">Transport Cost</Label>
+                  <Label htmlFor="stock-transport-cost">Տրանսպորտի ծախս</Label>
                   <Input
                     id="stock-transport-cost"
                     type="number"
@@ -173,7 +173,7 @@ export default function StockPage() {
                 </div>
                 <div className="md:col-span-2">
                   <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Saving..." : "Save Delivery"}
+                    {form.formState.isSubmitting ? "Պահպանում…" : "Պահպանել մուտքը"}
                   </Button>
                   {submitError ? <p className="mt-2 text-sm text-red-600">{submitError}</p> : null}
                 </div>
@@ -185,7 +185,7 @@ export default function StockPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Arrivals for {date}</CardTitle>
+              <CardTitle>Մուտքեր՝ {date}</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -194,18 +194,18 @@ export default function StockPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Fruit</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Unit Cost</TableHead>
-                      <TableHead className="text-right">Transport</TableHead>
-                      <TableHead className="text-right">Cost</TableHead>
+                      <TableHead>Միրգ</TableHead>
+                      <TableHead className="text-right">Քանակ</TableHead>
+                      <TableHead className="text-right">Միավորի արժեք</TableHead>
+                      <TableHead className="text-right">Տրանսպորտ</TableHead>
+                      <TableHead className="text-right">Ծախս</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {arrivals.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          No arrivals for this date.
+                          Այս ամսաթվի մուտքեր չկան։
                         </TableCell>
                       </TableRow>
                     ) : (

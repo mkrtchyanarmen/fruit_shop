@@ -6,11 +6,12 @@ import { cn } from "@/lib/utils"
 import { ShopSelector } from "@/components/shop-selector"
 
 const links = [
-  { href: "/", label: "Dashboard" },
-  { href: "/stock", label: "Stock" },
-  { href: "/sales", label: "Sales" },
-  { href: "/history", label: "History" },
-  { href: "/settings", label: "Settings" },
+  { href: "/", label: "Գլխավոր" },
+  { href: "/stock", label: "Մուտք" },
+  { href: "/inventory", label: "Պահեստ" },
+  { href: "/sales", label: "Վաճառք" },
+  { href: "/history", label: "Պատմություն" },
+  { href: "/settings", label: "Կարգավորումներ" },
 ]
 
 export function Navbar() {
@@ -20,7 +21,7 @@ export function Navbar() {
     <header className="border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-xl font-bold">Fruit Shop Manager</h1>
+          <h1 className="text-xl font-bold">Մրգերի խանութի կառավարում</h1>
           <ShopSelector />
         </div>
         <nav className="flex flex-wrap gap-2">

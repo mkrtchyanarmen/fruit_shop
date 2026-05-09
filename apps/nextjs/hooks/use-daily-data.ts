@@ -41,7 +41,7 @@ export function useDailyData(date: string, shopId: number | null): UseDailyDataR
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "Failed to fetch daily data",
+          : "Օրվա տվյալները բեռնել չհաջողվեց",
       )
     } finally {
       setIsLoading(false)

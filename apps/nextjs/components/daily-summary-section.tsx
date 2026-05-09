@@ -35,13 +35,13 @@ export function DailySummarySection({ summary, isLoading }: DailySummarySectionP
       />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <BreakdownTable
-          title="Fruits Sold"
-          amountLabel="Revenue"
+          title="Վաճառված միրգ"
+          amountLabel="Եկամուտ"
           rows={summary.soldBreakdown}
         />
         <BreakdownTable
-          title="Fruits Received"
-          amountLabel="Cost"
+          title="Մուտքագրված միրգ"
+          amountLabel="Ծախս"
           rows={summary.receivedBreakdown}
         />
       </div>

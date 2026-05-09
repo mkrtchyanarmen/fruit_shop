@@ -24,8 +24,8 @@ export function BreakdownTable({ title, amountLabel, rows }: BreakdownTableProps
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Fruit</TableHead>
-            <TableHead className="text-right">Qty</TableHead>
+            <TableHead>Միրգ</TableHead>
+            <TableHead className="text-right">Քանակ</TableHead>
             <TableHead className="text-right">{amountLabel}</TableHead>
           </TableRow>
         </TableHeader>
@@ -33,7 +33,7 @@ export function BreakdownTable({ title, amountLabel, rows }: BreakdownTableProps
           {rows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={3} className="text-center text-muted-foreground">
-                No data for selected date.
+                Ընտրված ամսաթվի տվյալներ չկան։
               </TableCell>
             </TableRow>
           ) : (

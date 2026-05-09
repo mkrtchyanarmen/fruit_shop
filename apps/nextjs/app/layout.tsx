@@ -4,8 +4,8 @@ import { Providers } from "@/components/providers"
 import { Navbar } from "@/components/navbar"
 
 export const metadata: Metadata = {
-  title: "Fruit Shop Manager",
-  description: "Multi-shop fruit store management frontend",
+  title: "Մրգերի խանութի կառավարում",
+  description: "Բազմախանութ մրգային կետի կառավարման վահանակ",
 }
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="hy">
       <body>
         <Providers>
           <div className="min-h-screen bg-background">

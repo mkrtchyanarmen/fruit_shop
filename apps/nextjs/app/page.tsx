@@ -14,8 +14,8 @@ export default function DashboardPage() {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-2xl font-semibold">Dashboard</h2>
-        <p className="text-sm text-muted-foreground">Today: {today}</p>
+        <h2 className="text-2xl font-semibold">Գլխավոր</h2>
+        <p className="text-sm text-muted-foreground">Այսօր՝ {today}</p>
       </div>
       {!activeShopId ? (
         <EmptyShopState />

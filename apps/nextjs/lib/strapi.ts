@@ -1,58 +1,23 @@
 import type { Fruit, SaleItem, Shop, StockArrival } from "@fruit-shop/types"
 import { STRAPI_BASE_URL } from "@/lib/constants"
 
-type StrapiEntity<T> = {
-  id: number
-  attributes: T
+/** Strapi v4: { id, attributes: { ... } }. Strapi v5: fields at top level with optional documentId. */
+type ApiEntity = Record<string, unknown> & {
+  id?: number
+  documentId?: string
+  attributes?: Record<string, unknown>
 }
 
-type StrapiResponse<T> = {
-  data: Array<StrapiEntity<T>>
-}
-
-type Relation<T> = {
-  data: StrapiEntity<T> | null
-}
-
-type MediaRelation = {
-  data: StrapiEntity<{
-    url: string
-    alternativeText?: string | null
-  }> | null
-}
-
-interface ShopAttributes {
-  name: string
-  address?: string
-  isActive?: boolean
-  is_active?: boolean
-}
-
-interface FruitAttributes {
-  name: string
-  unit: "kg" | "piece" | "bunch"
-  description?: string
-  image?: MediaRelation
-}
-
-interface StockArrivalAttributes {
-  date: string
-  quantity: number
-  unitCost?: number
-  unit_cost?: number
-  transportCost?: number
-  transport_cost?: number
-  shop: Relation<ShopAttributes>
-  fruit: Relation<FruitAttributes>
-}
-
-interface SaleItemAttributes {
-  date: string
-  quantity: number
-  pricePerUnit?: number
-  price_per_unit?: number
-  shop: Relation<ShopAttributes>
-  fruit: Relation<FruitAttributes>
+type StrapiListResponse = {
+  data: ApiEntity[]
+  meta?: {
+    pagination?: {
+      page: number
+      pageSize: number
+      pageCount: number
+      total: number
+    }
+  }
 }
 
 type QueryValue = string | number | boolean | undefined | null
@@ -87,116 +52,255 @@ async function strapiFetch<T>(path: string, options: RequestOptions = {}) {
 
   if (!response.ok) {
     const message = await response.text()
-    throw new Error(`Strapi request failed (${response.status}): ${message}`)
+    throw new Error(`Սերվերի հարցումը չհաջողվեց (${response.status}): ${message}`)
   }
 
   return (await response.json()) as T
 }
 
-function mapShop(entity: StrapiEntity<ShopAttributes>): Shop {
+/** Merge v4 `attributes` with top-level system fields; Strapi v5 is already flat. */
+function flattenEntity(entity: ApiEntity): Record<string, unknown> {
+  const { attributes, ...rest } = entity
+  const base = { ...rest } as Record<string, unknown>
+  if (attributes && typeof attributes === "object" && !Array.isArray(attributes)) {
+    return { ...base, ...attributes }
+  }
+  return base
+}
+
+function resolveNumericId(entity: ApiEntity): number {
+  const raw = entity.id
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw
+  if (typeof raw === "string" && /^\d+$/.test(raw)) return Number(raw)
+  throw new Error(
+    "Strapi entity missing numeric id. If you use documentId-only responses, enable Strapi-Response-Format v4 or extend the mapper.",
+  )
+}
+
+/** v4: { data: { id, attributes } }. v5: populated relation is the document object itself. */
+function resolveRelationTarget(relation: unknown): ApiEntity | null {
+  if (relation === null || relation === undefined) return null
+  if (typeof relation !== "object") return null
+  const obj = relation as Record<string, unknown>
+  if ("data" in obj) {
+    const data = obj.data
+    if (data === null || data === undefined) return null
+    if (Array.isArray(data)) {
+      const first = data[0]
+      return first && typeof first === "object" ? (first as ApiEntity) : null
+    }
+    return data as ApiEntity
+  }
+  return relation as ApiEntity
+}
+
+/** v4 media: image.data.attributes.url. v5: often flat url on the media object. */
+function mapImage(media: unknown): Fruit["image"] {
+  if (media === null || media === undefined) return undefined
+  if (typeof media !== "object") return undefined
+  const obj = media as Record<string, unknown>
+
+  const directUrl = obj.url
+  if (typeof directUrl === "string") {
+    return {
+      url: directUrl,
+      alternativeText:
+        typeof obj.alternativeText === "string" ? obj.alternativeText : undefined,
+    }
+  }
+
+  const data = obj.data
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const inner = data as Record<string, unknown>
+    const attrs = inner.attributes
+    const source =
+      attrs && typeof attrs === "object" && !Array.isArray(attrs)
+        ? (attrs as Record<string, unknown>)
+        : inner
+    const url = source.url
+    if (typeof url === "string") {
+      return {
+        url,
+        alternativeText:
+          typeof source.alternativeText === "string"
+            ? source.alternativeText
+            : undefined,
+      }
+    }
+  }
+
+  return undefined
+}
+
+function pickBoolean(
+  fields: Record<string, unknown>,
+  keys: string[],
+  fallback: boolean,
+): boolean {
+  for (const key of keys) {
+    const v = fields[key]
+    if (typeof v === "boolean") return v
+  }
+  return fallback
+}
+
+function mapShop(entity: ApiEntity): Shop {
+  const id = resolveNumericId(entity)
+  const fields = flattenEntity(entity)
   return {
-    id: entity.id,
-    name: entity.attributes.name,
-    address: entity.attributes.address,
-    isActive:
-      entity.attributes.isActive ?? entity.attributes.is_active ?? true,
+    id,
+    name: String(fields.name ?? ""),
+    address: fields.address !== undefined ? String(fields.address) : undefined,
+    isActive: pickBoolean(fields, ["isActive", "is_active"], true),
   }
 }
 
-function mapFruit(entity: StrapiEntity<FruitAttributes>): Fruit {
+function mapFruit(entity: ApiEntity): Fruit {
+  const id = resolveNumericId(entity)
+  const fields = flattenEntity(entity)
+  const unitRaw = fields.unit
+  const unit: Fruit["unit"] =
+    unitRaw === "kg" || unitRaw === "piece" || unitRaw === "bunch" ? unitRaw : "kg"
+
   return {
-    id: entity.id,
-    name: entity.attributes.name,
-    unit: entity.attributes.unit,
-    description: entity.attributes.description,
-    image: entity.attributes.image?.data?.attributes?.url
-      ? {
-          url: entity.attributes.image.data.attributes.url,
-          alternativeText:
-            entity.attributes.image.data.attributes.alternativeText ?? undefined,
-        }
-      : undefined,
+    id,
+    name: String(fields.name ?? ""),
+    unit,
+    description:
+      fields.description !== undefined ? String(fields.description) : undefined,
+    image: mapImage(fields.image),
   }
 }
 
-function requireRelation<T>(relation: Relation<T> | undefined, name: string) {
-  if (!relation?.data) {
+function requireRelation(relation: unknown, name: string): ApiEntity {
+  const target = resolveRelationTarget(relation)
+  if (!target) {
     throw new Error(`Missing ${name} relation in Strapi response`)
   }
-  return relation.data
+  return target
 }
 
-function mapStockArrival(entity: StrapiEntity<StockArrivalAttributes>): StockArrival {
-  const shopEntity = requireRelation(entity.attributes.shop, "shop")
-  const fruitEntity = requireRelation(entity.attributes.fruit, "fruit")
+function mapStockArrival(entity: ApiEntity): StockArrival {
+  const fields = flattenEntity(entity)
+  const shopEntity = requireRelation(fields.shop, "shop")
+  const fruitEntity = requireRelation(fields.fruit, "fruit")
+
+  const unitCost = Number(
+    fields.unitCost ?? fields.unit_cost ?? 0,
+  )
+  const transportCost = Number(
+    fields.transportCost ?? fields.transport_cost ?? 0,
+  )
+
   return {
-    id: entity.id,
-    date: entity.attributes.date,
+    id: resolveNumericId(entity),
+    date: String(fields.date ?? ""),
     shop: mapShop(shopEntity),
     fruit: mapFruit(fruitEntity),
-    quantity: Number(entity.attributes.quantity),
-    unitCost: Number(entity.attributes.unitCost ?? entity.attributes.unit_cost ?? 0),
-    transportCost: Number(
-      entity.attributes.transportCost ?? entity.attributes.transport_cost ?? 0,
-    ),
+    quantity: Number(fields.quantity ?? 0),
+    unitCost,
+    transportCost,
   }
 }
 
-function mapSaleItem(entity: StrapiEntity<SaleItemAttributes>): SaleItem {
-  const shopEntity = requireRelation(entity.attributes.shop, "shop")
-  const fruitEntity = requireRelation(entity.attributes.fruit, "fruit")
+function mapSaleItem(entity: ApiEntity): SaleItem {
+  const fields = flattenEntity(entity)
+  const shopEntity = requireRelation(fields.shop, "shop")
+  const fruitEntity = requireRelation(fields.fruit, "fruit")
+
   return {
-    id: entity.id,
-    date: entity.attributes.date,
+    id: resolveNumericId(entity),
+    date: String(fields.date ?? ""),
     shop: mapShop(shopEntity),
     fruit: mapFruit(fruitEntity),
-    quantity: Number(entity.attributes.quantity),
+    quantity: Number(fields.quantity ?? 0),
     pricePerUnit: Number(
-      entity.attributes.pricePerUnit ?? entity.attributes.price_per_unit ?? 0,
+      fields.pricePerUnit ?? fields.price_per_unit ?? 0,
     ),
   }
 }
 
 export async function getShops() {
-  const response = await strapiFetch<StrapiResponse<ShopAttributes>>("/api/shops", {
+  const response = await strapiFetch<StrapiListResponse>("/api/shops", {
     query: { populate: "*" },
   })
   return response.data.map(mapShop)
 }
 
 export async function getFruits() {
-  const response = await strapiFetch<StrapiResponse<FruitAttributes>>("/api/fruits", {
+  const response = await strapiFetch<StrapiListResponse>("/api/fruits", {
     query: { populate: "*" },
   })
   return response.data.map(mapFruit)
 }
 
-export async function getStockArrivals(shopId: number, date: string) {
-  const response = await strapiFetch<StrapiResponse<StockArrivalAttributes>>(
-    "/api/stock-arrivals",
-    {
+async function fetchAllPaginated(path: string, baseQuery: Record<string, QueryValue>) {
+  const pageSize = 100 // must match apps/strapi config api.rest.maxLimit
+  let page = 1
+  const all: ApiEntity[] = []
+
+  while (true) {
+    const response = await strapiFetch<StrapiListResponse>(path, {
       query: {
-        populate: "*",
-        "filters[shop][id][$eq]": shopId,
-        "filters[date][$eq]": date,
+        ...baseQuery,
+        "pagination[page]": page,
+        "pagination[pageSize]": pageSize,
       },
+    })
+    const chunk = response.data
+    all.push(...chunk)
+
+    const pagination = response.meta?.pagination
+    if (pagination) {
+      if (page >= pagination.pageCount) break
+      page += 1
+      continue
+    }
+    if (chunk.length < pageSize) break
+    page += 1
+  }
+
+  return all
+}
+
+export async function getStockArrivals(shopId: number, date: string) {
+  const response = await strapiFetch<StrapiListResponse>("/api/stock-arrivals", {
+    query: {
+      populate: "*",
+      "filters[shop][id][$eq]": shopId,
+      "filters[date][$eq]": date,
     },
-  )
+  })
   return response.data.map(mapStockArrival)
 }
 
+/** All arrivals for the shop (all dates), for inventory and landed cost. */
+export async function getAllStockArrivalsForShop(shopId: number) {
+  const data = await fetchAllPaginated("/api/stock-arrivals", {
+    populate: "*",
+    "filters[shop][id][$eq]": shopId,
+  })
+  return data.map(mapStockArrival)
+}
+
 export async function getSales(shopId: number, date: string) {
-  const response = await strapiFetch<StrapiResponse<SaleItemAttributes>>(
-    "/api/sale-items",
-    {
-      query: {
-        populate: "*",
-        "filters[shop][id][$eq]": shopId,
-        "filters[date][$eq]": date,
-      },
+  const response = await strapiFetch<StrapiListResponse>("/api/sale-items", {
+    query: {
+      populate: "*",
+      "filters[shop][id][$eq]": shopId,
+      "filters[date][$eq]": date,
     },
-  )
+  })
   return response.data.map(mapSaleItem)
+}
+
+/** All recorded sales for the shop (all dates). */
+export async function getAllSalesForShop(shopId: number) {
+  const data = await fetchAllPaginated("/api/sale-items", {
+    populate: "*",
+    "filters[shop][id][$eq]": shopId,
+  })
+  return data.map(mapSaleItem)
 }
 
 interface StockArrivalPayload {

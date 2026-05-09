@@ -1,7 +1,9 @@
-const currencyFormatter = new Intl.NumberFormat("en-US", {
+import type { Fruit } from "@fruit-shop/types"
+
+const currencyFormatter = new Intl.NumberFormat("hy-AM", {
   style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 2,
+  currency: "AMD",
+  maximumFractionDigits: 0,
 })
 
 export function formatCurrency(value: number) {
@@ -9,5 +11,21 @@ export function formatCurrency(value: number) {
 }
 
 export function formatNumber(value: number) {
-  return Number.isInteger(value) ? value.toString() : value.toFixed(2)
+  if (Number.isInteger(value)) {
+    return new Intl.NumberFormat("hy-AM", { maximumFractionDigits: 0 }).format(value)
+  }
+  return new Intl.NumberFormat("hy-AM", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+const unitLabels: Record<Fruit["unit"], string> = {
+  kg: "կգ",
+  piece: "հատ",
+  bunch: "փունջ",
+}
+
+export function formatFruitUnit(unit: Fruit["unit"]) {
+  return unitLabels[unit] ?? unit
 }

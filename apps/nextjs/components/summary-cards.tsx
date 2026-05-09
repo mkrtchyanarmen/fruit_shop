@@ -16,11 +16,11 @@ export function SummaryCards({
 }: SummaryCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard label="Revenue" value={totalRevenue} />
-      <MetricCard label="Stock Cost" value={totalStockCost} />
-      <MetricCard label="Transport Cost" value={totalTransportCost} />
+      <MetricCard label="Եկամուտ" value={totalRevenue} />
+      <MetricCard label="Ապրանքի ինքնարժեք" value={totalStockCost} />
+      <MetricCard label="Տրանսպորտի ծախս" value={totalTransportCost} />
       <MetricCard
-        label="Net Profit"
+        label="Մաքուր շահույթ"
         value={netProfit}
         valueClassName={netProfit >= 0 ? "text-emerald-600" : "text-red-600"}
       />

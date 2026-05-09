@@ -12,7 +12,7 @@ export function EmptyShopState() {
   return (
     <Card>
       <CardContent className="p-6 text-sm text-muted-foreground">
-        No active shop selected. Create or activate one in Settings.
+        Ակտիվ խանութ ընտրված չէ։ Ստեղծեք կամ ակտիվացրեք խանութ «Կարգավորումներ» բաժնում։
       </CardContent>
     </Card>
   )

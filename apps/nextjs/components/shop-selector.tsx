@@ -19,7 +19,7 @@ export function ShopSelector() {
       disabled={isLoading || shops.length === 0}
     >
       <SelectTrigger className="w-full sm:w-60">
-        <SelectValue placeholder={isLoading ? "Loading shops..." : "Select shop"} />
+        <SelectValue placeholder={isLoading ? "Խանութների բեռնում…" : "Ընտրել խանութը"} />
       </SelectTrigger>
       <SelectContent>
         {shops.map((shop) => (

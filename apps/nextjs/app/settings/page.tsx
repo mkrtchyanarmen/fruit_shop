@@ -23,8 +23,8 @@ import { useShopContext } from "@/hooks/use-shop-context"
 import { createShop, getShops, updateShop } from "@/lib/strapi"
 
 const shopSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  address: z.string().min(3, "Address must be at least 3 characters"),
+  name: z.string().min(2, "Անվանումը պետք է լինի առնվազն 2 նիշ"),
+  address: z.string().min(3, "Հասցեն պետք է լինի առնվազն 3 նիշ"),
 })
 
 type ShopFormValues = z.infer<typeof shopSchema>
@@ -51,7 +51,7 @@ export default function SettingsPage() {
       setShops(fetched)
     } catch (requestError) {
       setError(
-        requestError instanceof Error ? requestError.message : "Could not fetch shops",
+        requestError instanceof Error ? requestError.message : "Խանութները բեռնել չհաջողվեց",
       )
     } finally {
       setIsLoading(false)
@@ -75,30 +75,30 @@ export default function SettingsPage() {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Settings</h2>
+      <h2 className="text-2xl font-semibold">Կարգավորումներ</h2>
       <Card>
         <CardHeader>
-          <CardTitle>Add New Shop</CardTitle>
+          <CardTitle>Նոր խանութ</CardTitle>
         </CardHeader>
         <CardContent>
           <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={onSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="shop-name">Name</Label>
-              <Input id="shop-name" {...form.register("name")} placeholder="Shop name" />
+              <Label htmlFor="shop-name">Անվանում</Label>
+              <Input id="shop-name" {...form.register("name")} placeholder="Խանութի անվանում" />
               {form.formState.errors.name ? (
                 <p className="text-xs text-red-600">{form.formState.errors.name.message}</p>
               ) : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="shop-address">Address</Label>
-              <Input id="shop-address" {...form.register("address")} placeholder="Address" />
+              <Label htmlFor="shop-address">Հասցե</Label>
+              <Input id="shop-address" {...form.register("address")} placeholder="Հասցե" />
               {form.formState.errors.address ? (
                 <p className="text-xs text-red-600">{form.formState.errors.address.message}</p>
               ) : null}
             </div>
             <div className="md:col-span-2">
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Saving..." : "Add Shop"}
+                {form.formState.isSubmitting ? "Պահպանում…" : "Ավելացնել"}
               </Button>
             </div>
           </form>
@@ -107,7 +107,7 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Manage Shops</CardTitle>
+          <CardTitle>Խանութների կառավարում</CardTitle>
         </CardHeader>
         <CardContent>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
@@ -117,9 +117,9 @@ export default function SettingsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead className="text-right">Active</TableHead>
+                  <TableHead>Անվանում</TableHead>
+                  <TableHead>Հասցե</TableHead>
+                  <TableHead className="text-right">Ակտիվ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                         <Switch
                           checked={shop.isActive}
                           onCheckedChange={(checked) => void onToggleShop(shop, checked)}
-                          aria-label={`Toggle ${shop.name}`}
+                          aria-label={`${shop.name} — ակտիվ`}
                         />
                       </div>
                     </TableCell>
@@ -141,7 +141,7 @@ export default function SettingsPage() {
                 {shops.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="text-center text-muted-foreground">
-                      No shops found.
+                      Խանութներ չեն գտնվել։
                     </TableCell>
                   </TableRow>
                 ) : null}

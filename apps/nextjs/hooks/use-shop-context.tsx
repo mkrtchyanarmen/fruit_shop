@@ -55,7 +55,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "Failed to fetch shops",
+          : "Խանութների ցուցակը բեռնել չհաջողվեց",
       )
     } finally {
       setIsLoading(false)

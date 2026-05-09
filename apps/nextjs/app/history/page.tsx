@@ -18,11 +18,13 @@ export default function HistoryPage() {
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">History</h2>
-          <p className="text-sm text-muted-foreground">View any date for selected shop</p>
+          <h2 className="text-2xl font-semibold">Պատմություն</h2>
+          <p className="text-sm text-muted-foreground">
+            Դիտեք ցանկացած ամսաթիվ ընտրված խանութի համար
+          </p>
         </div>
         <div className="w-full sm:w-56">
-          <Label htmlFor="history-date">Date</Label>
+          <Label htmlFor="history-date">Ամսաթիվ</Label>
           <Input
             id="history-date"
             type="date"

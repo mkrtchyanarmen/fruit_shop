@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { Controller, useForm } from "react-hook-form"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { EmptyShopState, PageError } from "@/components/page-state"
@@ -25,14 +25,16 @@ import { useShopContext } from "@/hooks/use-shop-context"
 import { STRAPI_BASE_URL } from "@/lib/constants"
 import { getTodayLocalIsoDate } from "@/lib/date"
 import { formatCurrency, formatNumber } from "@/lib/format"
-import { createSaleItem, getFruits } from "@/lib/strapi"
+import { weightedAverageUnitCostByFruit } from "@/lib/inventory"
+import { MARKUP_MAX, MARKUP_MIN, retailPriceRangeFromUnitCost } from "@/lib/pricing"
+import { createSaleItem, getAllStockArrivalsForShop, getFruits } from "@/lib/strapi"
 import type { Fruit } from "@fruit-shop/types"
 
 const saleSchema = z.object({
-  date: z.string().min(1, "Date is required"),
-  fruitId: z.string().min(1, "Fruit is required"),
-  quantity: z.coerce.number().positive("Quantity must be greater than zero"),
-  pricePerUnit: z.coerce.number().positive("Price must be greater than zero"),
+  date: z.string().min(1, "Ամսաթիվը պարտադիր է"),
+  fruitId: z.string().min(1, "Ընտրեք միրգ"),
+  quantity: z.coerce.number().positive("Քանակը պետք է լինի զրոյից մեծ"),
+  pricePerUnit: z.coerce.number().positive("Գինը պետք է լինի զրոյից մեծ"),
 })
 
 type SaleFormValues = z.infer<typeof saleSchema>
@@ -43,6 +45,7 @@ export default function SalesPage() {
   const [date, setDate] = useState(today)
   const [fruits, setFruits] = useState<Fruit[]>([])
   const [isFruitsLoading, setIsFruitsLoading] = useState(true)
+  const [shopArrivalsLoading, setShopArrivalsLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const { sales, isLoading, error, refresh } = useDailyData(date, activeShopId)
 
@@ -69,6 +72,54 @@ export default function SalesPage() {
     void fetchFruits()
   }, [])
 
+  const [shopArrivals, setShopArrivals] = useState<Awaited<
+    ReturnType<typeof getAllStockArrivalsForShop>
+  >>([])
+
+  useEffect(() => {
+    if (!activeShopId) {
+      setShopArrivals([])
+      return
+    }
+    const run = async () => {
+      setShopArrivalsLoading(true)
+      try {
+        setShopArrivals(await getAllStockArrivalsForShop(activeShopId))
+      } catch {
+        setShopArrivals([])
+      } finally {
+        setShopArrivalsLoading(false)
+      }
+    }
+    void run()
+  }, [activeShopId])
+
+  const avgCostByFruitId = useMemo(() => {
+    const { averages } = weightedAverageUnitCostByFruit(shopArrivals)
+    return averages
+  }, [shopArrivals])
+
+  const selectedFruitId = useWatch({ control: form.control, name: "fruitId" })
+  const watchedCost =
+    selectedFruitId !== "" ? avgCostByFruitId.get(Number(selectedFruitId)) : undefined
+  const retailHint =
+    watchedCost !== undefined ? retailPriceRangeFromUnitCost(watchedCost) : null
+
+  const { setValue } = form
+  useEffect(() => {
+    if (!selectedFruitId) {
+      setValue("pricePerUnit", 0)
+      return
+    }
+    const cost = avgCostByFruitId.get(Number(selectedFruitId))
+    const range = retailPriceRangeFromUnitCost(cost ?? 0)
+    if (range) {
+      setValue("pricePerUnit", range.suggested)
+    } else {
+      setValue("pricePerUnit", 0)
+    }
+  }, [selectedFruitId, avgCostByFruitId, setValue])
+
   const onSubmit = form.handleSubmit(async (values) => {
     if (!activeShopId) return
     setSubmitError(null)
@@ -90,33 +141,33 @@ export default function SalesPage() {
       })
     } catch (requestError) {
       setSubmitError(
-        requestError instanceof Error ? requestError.message : "Could not save sale",
+        requestError instanceof Error ? requestError.message : "Վաճառքը պահպանել չհաջողվեց",
       )
     }
   })
 
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Sales</h2>
+      <h2 className="text-2xl font-semibold">Վաճառք</h2>
       {!activeShopId ? (
         <EmptyShopState />
       ) : (
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Log Sale</CardTitle>
+              <CardTitle>Վաճառք գրանցել</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="grid grid-cols-1 gap-4 md:grid-cols-2" onSubmit={onSubmit}>
                 <div className="space-y-2">
-                  <Label htmlFor="sale-date">Date</Label>
+                  <Label htmlFor="sale-date">Ամսաթիվ</Label>
                   <Input id="sale-date" type="date" {...form.register("date")} />
                   {form.formState.errors.date ? (
                     <p className="text-xs text-red-600">{form.formState.errors.date.message}</p>
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label>Fruit</Label>
+                  <Label>Միրգ</Label>
                   <Controller
                     control={form.control}
                     name="fruitId"
@@ -126,7 +177,7 @@ export default function SalesPage() {
                         value={field.value}
                         onChange={field.onChange}
                         disabled={isFruitsLoading}
-                        placeholder={isFruitsLoading ? "Loading fruits..." : "Select fruit"}
+                        placeholder={isFruitsLoading ? "Մրգերի բեռնում…" : "Ընտրել միրգ"}
                       />
                     )}
                   />
@@ -135,20 +186,36 @@ export default function SalesPage() {
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sale-qty">Quantity</Label>
+                  <Label htmlFor="sale-qty">Քանակ</Label>
                   <Input id="sale-qty" type="number" step="0.01" {...form.register("quantity")} />
                   {form.formState.errors.quantity ? (
                     <p className="text-xs text-red-600">{form.formState.errors.quantity.message}</p>
                   ) : null}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sale-price">Price per Unit</Label>
+                  <Label htmlFor="sale-price">Միավորի գին</Label>
                   <Input
                     id="sale-price"
                     type="number"
                     step="0.01"
                     {...form.register("pricePerUnit")}
                   />
+                  {shopArrivalsLoading ? (
+                    <p className="text-xs text-muted-foreground">
+                      Հաշվարկվում է միջին ինքնարժեքը…
+                    </p>
+                  ) : retailHint && watchedCost !== undefined ? (
+                    <p className="text-xs text-muted-foreground">
+                      Միջին ինքնարժեքի ({formatCurrency(watchedCost)}) նկատմամբ{" "}
+                      {Math.round(MARKUP_MIN * 100)}–{Math.round(MARKUP_MAX * 100)}% ավելացում՝{" "}
+                      {formatCurrency(retailHint.min)} – {formatCurrency(retailHint.max)}։
+                      Լռելյայն՝ {Math.round(((MARKUP_MIN + MARKUP_MAX) / 2) * 100)}%։
+                    </p>
+                  ) : selectedFruitId ? (
+                    <p className="text-xs text-muted-foreground">
+                      Այս մրգի մուտք դեռ չի գրանցված՝ մուտքագրեք վաճառքի գինը։
+                    </p>
+                  ) : null}
                   {form.formState.errors.pricePerUnit ? (
                     <p className="text-xs text-red-600">
                       {form.formState.errors.pricePerUnit.message}
@@ -157,7 +224,7 @@ export default function SalesPage() {
                 </div>
                 <div className="md:col-span-2">
                   <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Saving..." : "Save Sale"}
+                    {form.formState.isSubmitting ? "Պահպանում…" : "Պահպանել վաճառքը"}
                   </Button>
                   {submitError ? <p className="mt-2 text-sm text-red-600">{submitError}</p> : null}
                 </div>
@@ -169,7 +236,7 @@ export default function SalesPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Sales for {date}</CardTitle>
+              <CardTitle>Վաճառքներ՝ {date}</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -178,17 +245,17 @@ export default function SalesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Fruit</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Price/Unit</TableHead>
-                      <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead>Միրգ</TableHead>
+                      <TableHead className="text-right">Քանակ</TableHead>
+                      <TableHead className="text-right">Գին/միավոր</TableHead>
+                      <TableHead className="text-right">Եկամուտ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {sales.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-muted-foreground">
-                          No sales for this date.
+                          Այս ամսաթվի վաճառքներ չկան։
                         </TableCell>
                       </TableRow>
                     ) : (

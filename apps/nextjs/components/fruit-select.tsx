@@ -24,7 +24,7 @@ export function FruitSelect({
   value,
   onChange,
   disabled,
-  placeholder = "Select fruit",
+  placeholder = "Ընտրել միրգ",
 }: FruitSelectProps) {
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
