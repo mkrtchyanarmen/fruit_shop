@@ -61,7 +61,7 @@ export default function InventoryPage() {
         <h2 className="text-2xl font-semibold">Պահեստի մնացորդ</h2>
         <p className="text-sm text-muted-foreground">
           Ընտրված խանութում յուրաքանչյուր մրգի փաստացի քանակը՝ բոլոր մուտքերի և վաճառքների տարբերությամբ։
-          Առաջարկվող վաճառքի գինը՝ միջին գնային ինքնարժեքի վրա 30–40% ավելացում, եթե կան մուտքեր։
+          Առաջարկվող գինը՝ միջին ինքնարժեք և markup (տես «Գներ և markup» էջը)։
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export default function InventoryPage() {
                     <TableHead className="text-right">Առկա է</TableHead>
                     <TableHead>Չափման միավոր</TableHead>
                     <TableHead className="text-right">Միջին ինքնարժեք</TableHead>
-                    <TableHead className="text-right">Առաջարկվող գին (30–40%)</TableHead>
+                    <TableHead className="text-right">Առաջարկվող գին</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -106,6 +106,7 @@ export default function InventoryPage() {
                     rows.map((row) => {
                       const retail = retailPriceRangeFromUnitCost(
                         row.weightedAverageUnitCost ?? 0,
+                        row.fruit.retailPricePerUnit ?? null,
                       )
                       return (
                         <TableRow key={row.fruit.id}>

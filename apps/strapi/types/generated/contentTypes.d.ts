@@ -464,6 +464,7 @@ export interface ApiFruitFruit extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
     publishedAt: Schema.Attribute.DateTime;
+    retailPricePerUnit: Schema.Attribute.Decimal;
     saleItems: Schema.Attribute.Relation<
       'oneToMany',
       'api::sale-item.sale-item'

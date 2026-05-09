@@ -45,9 +45,9 @@ interface CartLine {
   pricePerUnit: number
 }
 
-function suggestedPrice(fruitId: number, averages: Map<number, number>) {
-  const cost = averages.get(fruitId)
-  const range = retailPriceRangeFromUnitCost(cost ?? 0)
+function suggestedPrice(fruit: Fruit, averages: Map<number, number>) {
+  const cost = averages.get(fruit.id)
+  const range = retailPriceRangeFromUnitCost(cost ?? 0, fruit.retailPricePerUnit ?? null)
   return range?.suggested ?? 0
 }
 
@@ -114,7 +114,7 @@ export function SalesFlow({ compactMobileChrome = false }: SalesFlowProps) {
 
   const dialogPrice = useMemo(() => {
     if (!dialogFruit) return 0
-    const p = suggestedPrice(dialogFruit.id, avgCostByFruitId)
+    const p = suggestedPrice(dialogFruit, avgCostByFruitId)
     return p > 0 ? p : 0
   }, [dialogFruit, avgCostByFruitId])
 
@@ -309,9 +309,12 @@ export function SalesFlow({ compactMobileChrome = false }: SalesFlowProps) {
                     <DialogDescription>
                       {shopArrivalsLoading
                         ? "Բեռնվում է ինքնարժեքը…"
-                        : dialogPrice > 0
-                          ? `Առաջարկվող միավորի գին՝ ${formatCurrency(dialogPrice)}`
-                          : "Մուտք չկա՝ գինը կարող եք փոխել ստորև (լռելյայն 1)։"}
+                        : dialogFruit.retailPricePerUnit != null &&
+                            dialogFruit.retailPricePerUnit > 0
+                          ? `Ֆիքսված վաճառքի գին՝ ${formatCurrency(dialogPrice)} («Գներ և markup»)`
+                          : dialogPrice > 0
+                            ? `Առաջարկվող միավորի գին՝ ${formatCurrency(dialogPrice)}`
+                            : "Մուտք չկա՝ գինը կարող եք փոխել ստորև (լռելյայն 1)։"}
                     </DialogDescription>
                   </DialogHeader>
 

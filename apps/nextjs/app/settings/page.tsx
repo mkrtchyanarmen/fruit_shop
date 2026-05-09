@@ -69,7 +69,11 @@ export default function SettingsPage() {
   })
 
   const onToggleShop = async (shop: Shop, nextState: boolean) => {
-    await updateShop(shop.id, { isActive: nextState })
+    if (!shop.documentId) {
+      setError("Խանութի documentId բացակայում է։ Թարմացրեք էջը։")
+      return
+    }
+    await updateShop(shop.documentId, { isActive: nextState })
     await Promise.all([loadShops(), refreshShops()])
   }
 

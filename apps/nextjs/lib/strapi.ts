@@ -144,11 +144,21 @@ function pickBoolean(
   return fallback
 }
 
+function resolveDocumentId(entity: ApiEntity, fields: Record<string, unknown>): string | undefined {
+  const raw =
+    fields.documentId ??
+    fields.document_id ??
+    entity.documentId ??
+    (entity as Record<string, unknown>).document_id
+  return typeof raw === "string" && raw.length > 0 ? raw : undefined
+}
+
 function mapShop(entity: ApiEntity): Shop {
   const id = resolveNumericId(entity)
   const fields = flattenEntity(entity)
   return {
     id,
+    documentId: resolveDocumentId(entity, fields),
     name: String(fields.name ?? ""),
     address: fields.address !== undefined ? String(fields.address) : undefined,
     isActive: pickBoolean(fields, ["isActive", "is_active"], true),
@@ -162,12 +172,23 @@ function mapFruit(entity: ApiEntity): Fruit {
   const unit: Fruit["unit"] =
     unitRaw === "kg" || unitRaw === "piece" || unitRaw === "bunch" ? unitRaw : "kg"
 
+  const priceRaw = fields.retailPricePerUnit ?? fields.retail_price_per_unit
+  let retailPricePerUnit: number | null | undefined
+  if (priceRaw === undefined || priceRaw === null || priceRaw === "") {
+    retailPricePerUnit = undefined
+  } else {
+    const n = Number(priceRaw)
+    retailPricePerUnit = Number.isFinite(n) ? n : undefined
+  }
+
   return {
     id,
+    documentId: resolveDocumentId(entity, fields),
     name: String(fields.name ?? ""),
     unit,
     description:
       fields.description !== undefined ? String(fields.description) : undefined,
+    retailPricePerUnit,
     image: mapImage(fields.image),
   }
 }
@@ -232,6 +253,23 @@ export async function getFruits() {
     query: { populate: "*" },
   })
   return response.data.map(mapFruit)
+}
+
+/** Strapi 5՝ թարմացումը կատարվում է documentId-ով, ոչ թե թվային id-ով */
+export async function updateFruit(
+  documentId: string,
+  payload: { retailPricePerUnit?: number | null },
+) {
+  await strapiFetch(`/api/fruits/${encodeURIComponent(documentId)}`, {
+    method: "PUT",
+    body: {
+      data: {
+        ...(payload.retailPricePerUnit !== undefined
+          ? { retailPricePerUnit: payload.retailPricePerUnit }
+          : {}),
+      },
+    },
+  })
 }
 
 async function fetchAllPaginated(path: string, baseQuery: Record<string, QueryValue>) {
@@ -392,10 +430,10 @@ export async function createShop(payload: { name: string; address: string }) {
 }
 
 export async function updateShop(
-  shopId: number,
+  documentId: string,
   payload: { name?: string; address?: string; isActive?: boolean },
 ) {
-  await strapiFetch(`/api/shops/${shopId}`, {
+  await strapiFetch(`/api/shops/${encodeURIComponent(documentId)}`, {
     method: "PUT",
     body: {
       data: payload,

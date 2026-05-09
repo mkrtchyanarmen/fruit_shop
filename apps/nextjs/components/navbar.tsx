@@ -14,6 +14,7 @@ const links = [
   { href: "/today", label: "Այսօրվա գնում" },
   { href: "/stock", label: "Մուտք" },
   { href: "/inventory", label: "Պահեստ" },
+  { href: "/markup", label: "Գներ և markup" },
   { href: "/history", label: "Պատմություն" },
   { href: "/settings", label: "Կարգավորումներ" },
 ]

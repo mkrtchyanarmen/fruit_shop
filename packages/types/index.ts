@@ -1,5 +1,7 @@
 export interface Shop {
   id: number
+  /** Strapi 5 REST PUT/DELETE URL-ում պահանջվում է documentId, ոչ թե թվային id */
+  documentId?: string
   name: string
   address?: string
   isActive: boolean
@@ -7,9 +9,13 @@ export interface Shop {
 
 export interface Fruit {
   id: number
+  /** Strapi 5՝ թարմացման REST ուղին `/api/fruits/:documentId` */
+  documentId?: string
   name: string
   unit: 'kg' | 'piece' | 'bunch'
   description?: string
+  /** Ֆիքսված վաճառքի գին դրամով / միավոր (AMD). Թողնել դատարկ՝ լռելյայն տոկոսային առաջարկ։ Markup-ը հաշվարկվում է կոդում։ */
+  retailPricePerUnit?: number | null
   image?: {
     url: string
     alternativeText?: string
