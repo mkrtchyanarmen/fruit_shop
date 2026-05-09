@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "stock_arrivals",
+  "info": {
+    "singularName": "stock-arrival",
+    "pluralName": "stock-arrivals",
+    "displayName": "StockArrival",
+    "description": "A delivery of fruit to a shop, with quantity and costs."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "date": {
+      "type": "date",
+      "required": true
+    },
+    "shop": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::shop.shop",
+      "inversedBy": "stockArrivals",
+      "required": true
+    },
+    "fruit": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::fruit.fruit",
+      "inversedBy": "stockArrivals",
+      "required": true
+    },
+    "quantity": {
+      "type": "decimal",
+      "required": true
+    },
+    "unitCost": {
+      "type": "decimal",
+      "required": true
+    },
+    "transportCost": {
+      "type": "decimal",
+      "required": true
+    }
+  }
+}

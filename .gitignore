@@ -1,0 +1,9 @@
+node_modules
+.next
+.env
+.env.local
+dist
+.cache
+.turbo
+apps/strapi/.tmp
+apps/strapi/public/uploads

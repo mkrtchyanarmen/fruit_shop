@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "shops",
+  "info": {
+    "singularName": "shop",
+    "pluralName": "shops",
+    "displayName": "Shop",
+    "description": "A physical fruit shop location."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "address": {
+      "type": "string"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "stockArrivals": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::stock-arrival.stock-arrival",
+      "mappedBy": "shop"
+    },
+    "saleItems": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::sale-item.sale-item",
+      "mappedBy": "shop"
+    }
+  }
+}

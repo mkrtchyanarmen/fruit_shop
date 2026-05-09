@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "fruits",
+  "info": {
+    "singularName": "fruit",
+    "pluralName": "fruits",
+    "displayName": "Fruit",
+    "description": "A fruit catalog item sold across shops."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "unit": {
+      "type": "enumeration",
+      "enum": ["kg", "piece", "bunch"],
+      "required": true
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "description": {
+      "type": "text"
+    },
+    "stockArrivals": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::stock-arrival.stock-arrival",
+      "mappedBy": "fruit"
+    },
+    "saleItems": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::sale-item.sale-item",
+      "mappedBy": "fruit"
+    }
+  }
+}

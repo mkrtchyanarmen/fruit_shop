@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sale_items",
+  "info": {
+    "singularName": "sale-item",
+    "pluralName": "sale-items",
+    "displayName": "SaleItem",
+    "description": "A sale of fruit at a shop, with quantity and selling price."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "date": {
+      "type": "date",
+      "required": true
+    },
+    "shop": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::shop.shop",
+      "inversedBy": "saleItems",
+      "required": true
+    },
+    "fruit": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::fruit.fruit",
+      "inversedBy": "saleItems",
+      "required": true
+    },
+    "quantity": {
+      "type": "decimal",
+      "required": true
+    },
+    "pricePerUnit": {
+      "type": "decimal",
+      "required": true
+    }
+  }
+}

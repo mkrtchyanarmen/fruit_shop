@@ -1,0 +1,16 @@
+{
+  "name": "fruit-shop",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:next": "pnpm --filter nextjs dev",
+    "dev:strapi": "pnpm --filter strapi dev",
+    "dev": "concurrently -n next,strapi -c blue,magenta \"pnpm dev:next\" \"pnpm dev:strapi\"",
+    "build:next": "pnpm --filter nextjs build",
+    "build:strapi": "pnpm --filter strapi build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.2"
+  }
+}
