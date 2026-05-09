@@ -17,7 +17,7 @@ export function Navbar() {
   const pathname = usePathname()
 
   return (
-    <header className="border-b bg-white/80 backdrop-blur">
+    <header className="border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-bold">Fruit Shop Manager</h1>
@@ -34,7 +34,7 @@ export function Navbar() {
                 href={link.href}
                 className={cn(
                   "rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted",
-                  isActive && "bg-primary text-white hover:bg-primary/90",
+                  isActive && "bg-primary text-primary-foreground hover:bg-primary/90",
                 )}
               >
                 {link.label}
