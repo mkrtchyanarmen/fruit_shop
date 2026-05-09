@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/table"
 import { useDailyData } from "@/hooks/use-daily-data"
 import { useShopContext } from "@/hooks/use-shop-context"
-import { STRAPI_BASE_URL } from "@/lib/constants"
 import { getTodayLocalIsoDate } from "@/lib/date"
 import { formatCurrency, formatFruitUnit, formatNumber } from "@/lib/format"
 import { createStockArrivalsBulk, getFruits } from "@/lib/strapi"
@@ -340,7 +339,7 @@ export default function StockPage() {
                             <div className="flex items-center gap-2">
                               {arrival.fruit.image?.url ? (
                                 <Image
-                                  src={`${STRAPI_BASE_URL}${arrival.fruit.image.url}`}
+                                  src={`${arrival.fruit.image.url}`}
                                   alt={arrival.fruit.name}
                                   width={28}
                                   height={28}

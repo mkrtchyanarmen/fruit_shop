@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { STRAPI_BASE_URL } from "@/lib/constants"
 
 interface FruitSelectProps {
   fruits: Fruit[]
@@ -37,7 +36,7 @@ export function FruitSelect({
             <div className="flex items-center gap-2">
               {fruit.image?.url ? (
                 <Image
-                  src={`${STRAPI_BASE_URL}${fruit.image.url}`}
+                  src={`${fruit.image.url}`}
                   alt={fruit.image.alternativeText ?? fruit.name}
                   width={24}
                   height={24}

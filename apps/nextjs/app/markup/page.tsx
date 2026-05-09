@@ -16,7 +16,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useShopContext } from "@/hooks/use-shop-context"
-import { STRAPI_BASE_URL } from "@/lib/constants"
 import { formatCurrency } from "@/lib/format"
 import {
   impliedMarkupPercentDisplay,
@@ -202,7 +201,7 @@ export default function MarkupPricingPage() {
                           <div className="flex items-center gap-2">
                             {fruit.image?.url ? (
                               <Image
-                                src={`${STRAPI_BASE_URL}${fruit.image.url}`}
+                                src={`${fruit.image.url}`}
                                 alt={fruit.name}
                                 width={32}
                                 height={32}

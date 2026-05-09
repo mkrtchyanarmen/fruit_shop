@@ -14,7 +14,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useShopContext } from "@/hooks/use-shop-context"
-import { STRAPI_BASE_URL } from "@/lib/constants"
 import { formatCurrency, formatFruitUnit, formatNumber } from "@/lib/format"
 import { computeFruitInventoryRows } from "@/lib/inventory"
 import { retailPriceRangeFromUnitCost } from "@/lib/pricing"
@@ -114,7 +113,7 @@ export default function InventoryPage() {
                             <div className="flex items-center gap-2">
                               {row.fruit.image?.url ? (
                                 <Image
-                                  src={`${STRAPI_BASE_URL}${row.fruit.image.url}`}
+                                  src={`${row.fruit.image.url}`}
                                   alt={row.fruit.name}
                                   width={28}
                                   height={28}

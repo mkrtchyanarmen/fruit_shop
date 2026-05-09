@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/table"
 import { useDailyData } from "@/hooks/use-daily-data"
 import { useShopContext } from "@/hooks/use-shop-context"
-import { STRAPI_BASE_URL } from "@/lib/constants"
 import { getTodayLocalIsoDate } from "@/lib/date"
 import { formatCurrency, formatFruitUnit, formatNumber } from "@/lib/format"
 import { weightedAverageUnitCostByFruit } from "@/lib/inventory"
@@ -279,7 +278,7 @@ export function SalesFlow({ compactMobileChrome = false }: SalesFlowProps) {
                 >
                   {fruit.image?.url ? (
                     <Image
-                      src={`${STRAPI_BASE_URL}${fruit.image.url}`}
+                      src={`${fruit.image.url}`}
                       alt={fruit.name}
                       fill
                       className="object-contain transition group-hover:scale-105"
@@ -322,7 +321,7 @@ export function SalesFlow({ compactMobileChrome = false }: SalesFlowProps) {
                     <div className="relative mx-auto mb-4 aspect-square w-full max-w-[280px] overflow-hidden rounded-lg bg-muted">
                       {dialogFruit.image?.url ? (
                         <Image
-                          src={`${STRAPI_BASE_URL}${dialogFruit.image.url}`}
+                          src={`${dialogFruit.image.url}`}
                           alt={dialogFruit.name}
                           fill
                           className="object-cover"
@@ -482,7 +481,7 @@ export function SalesFlow({ compactMobileChrome = false }: SalesFlowProps) {
                             <div className="flex items-center gap-2">
                               {sale.fruit.image?.url ? (
                                 <Image
-                                  src={`${STRAPI_BASE_URL}${sale.fruit.image.url}`}
+                                  src={`${sale.fruit.image.url}`}
                                   alt={sale.fruit.name}
                                   width={28}
                                   height={28}
