@@ -36,9 +36,10 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": ">=20.0.0 <=24.x.x",
-    "npm": ">=6.0.0"
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
   },
+  "packageManager": "pnpm@9.0.0",
   "strapi": {
     "uuid": "189616e1-5cba-4b23-9aa3-d94b4547dda2",
     "installId": "7df00f91cd1c0cc642502647a5ec06528f894435349811cb2ac1c742e753cf8f"
