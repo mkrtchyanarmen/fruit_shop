@@ -9,6 +9,9 @@ const PUBLIC_API_CONTENT_TYPES = [
   'api::sale-item.sale-item',
 ];
 
+/** Custom controller actions beyond core CRUD */
+const PUBLIC_API_CUSTOM_ACTIONS = ['api::sale-item.sale-item.bulkCreate'];
+
 // Allow image upload + read so the admin UI can attach images to fruits and the
 // frontend can fetch them through the REST API without auth.
 const PUBLIC_UPLOAD_ACTIONS = [
@@ -33,7 +36,7 @@ async function ensurePublicPermissions({ strapi }: { strapi: Core.Strapi }) {
   const apiActions = PUBLIC_API_CONTENT_TYPES.flatMap((uid) =>
     PUBLIC_API_ACTIONS.map((action) => `${uid}.${action}`),
   );
-  const allActions = [...apiActions, ...PUBLIC_UPLOAD_ACTIONS];
+  const allActions = [...apiActions, ...PUBLIC_API_CUSTOM_ACTIONS, ...PUBLIC_UPLOAD_ACTIONS];
 
   for (const action of allActions) {
     const existing = await strapi.db

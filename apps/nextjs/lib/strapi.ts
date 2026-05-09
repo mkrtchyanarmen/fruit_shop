@@ -351,6 +351,33 @@ export async function createSaleItem(payload: SaleItemPayload) {
   })
 }
 
+export interface BulkSaleLinePayload {
+  fruitId: number
+  quantity: number
+  pricePerUnit: number
+}
+
+export async function createSaleItemsBulk(payload: {
+  date: string
+  shopId: number
+  items: BulkSaleLinePayload[]
+}) {
+  await strapiFetch("/api/sale-items/bulk", {
+    method: "POST",
+    body: {
+      data: {
+        date: payload.date,
+        shop: payload.shopId,
+        items: payload.items.map((item) => ({
+          fruitId: item.fruitId,
+          quantity: item.quantity,
+          pricePerUnit: item.pricePerUnit,
+        })),
+      },
+    },
+  })
+}
+
 export async function createShop(payload: { name: string; address: string }) {
   await strapiFetch("/api/shops", {
     method: "POST",

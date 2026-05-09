@@ -32,11 +32,11 @@ async function api(method, path, body) {
 }
 
 async function waitForStrapi() {
-  process.stdout.write(`Waiting for Strapi at ${BASE} `);
+  process.stdout.write(`Սպասում ենք Strapi-ին (${BASE}) `);
   for (let i = 0; i < 30; i++) {
     try {
       await api('GET', '/api/shops?pagination[pageSize]=1');
-      process.stdout.write(' up.\n');
+      process.stdout.write(' պատրաստ է։\n');
       return;
     } catch {
       process.stdout.write('.');
@@ -44,7 +44,7 @@ async function waitForStrapi() {
     }
   }
   throw new Error(
-    `\nStrapi not reachable at ${BASE}. Start it with: pnpm dev:strapi`,
+    `\nStrapi-ին հնարավոր չի կապվել ${BASE} հասցով։ Միացրեք՝ pnpm dev:strapi`,
   );
 }
 
@@ -69,20 +69,23 @@ function isoDaysAgo(days) {
   return d.toISOString().slice(0, 10);
 }
 
+/** Մեկ խանութ — ընտրիչը UI-ում թաքցված է մինչև երկրորդ խանութ ավելացնեն։ */
+const SHOP_NAME = 'Մրգերի խանութ';
+
 const SHOP_DEFS = [
-  { name: 'Երևան կենտրոնական', address: 'Տիգրան Մեծ 5, Երևան', isActive: true },
-  { name: 'Վանաձորի շուկա', address: 'Տիգրան Մեծ 22, Վանաձոր', isActive: true },
-  { name: 'Գյումրու պլազա', address: 'Աբովյան 14, Գյումրի', isActive: true },
-  { name: 'Դիլիջանի կրպակ', address: 'Մյասնիկյան 8, Դիլիջան', isActive: false },
+  { name: SHOP_NAME, address: 'Տիգրան Մեծ 5, Երևան', isActive: true },
 ];
 
 const FRUIT_DEFS = [
   { name: 'Խնձոր', unit: 'kg', description: 'Կծկուն կարմիր խնձոր՝ Արագածոտնից։' },
-  { name: 'Բանան', unit: 'kg', description: 'Իկվադորյան ներմուծում՝ հասունացված խանութում։' },
+  { name: 'Բանան', unit: 'kg', description: 'Էկվադորից ներմուծում, հասունացված խանութում։' },
   { name: 'Նուռ', unit: 'piece', description: 'Քաղցր տեղական նուռ՝ Մեղրիից։' },
   { name: 'Խաղող', unit: 'bunch', description: 'Արենիի մութ խաղող՝ փունջով։' },
   { name: 'Ելակ', unit: 'kg', description: 'Ջերմոցային, քաշով վաճառք։' },
   { name: 'Ձմերուկ', unit: 'piece', description: 'Սեզոնային՝ Արարատյան դաշտից։' },
+  { name: 'Լոլիկ', unit: 'kg', description: 'Տեղական լոլիկ, քաշով վաճառք։' },
+  { name: 'Վարագույն պղպեղ', unit: 'kg', description: 'Սեղանի վարագույն պղպեղ։' },
+  { name: 'Կազմարինի կաղամբ', unit: 'piece', description: 'Սպիտակ կազմարինի կաղամբ՝ հատով։' },
 ];
 
 // cost in AMD per unit, sale price in AMD per unit
@@ -93,6 +96,9 @@ const PRICING = {
   Խաղող: { unitCost: 1000, pricePerUnit: 1600 },
   Ելակ: { unitCost: 1500, pricePerUnit: 2500 },
   Ձմերուկ: { unitCost: 600, pricePerUnit: 1100 },
+  Լոլիկ: { unitCost: 400, pricePerUnit: 650 },
+  'Վարագույն պղպեղ': { unitCost: 700, pricePerUnit: 1100 },
+  'Կազմարինի կաղամբ': { unitCost: 250, pricePerUnit: 400 },
 };
 
 /**
@@ -101,30 +107,33 @@ const PRICING = {
  */
 const STOCK_ARRIVALS = [
   // 6 days ago — opening restock across the chain
-  { daysAgo: 6, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 50, transportCost: 3000 },
-  { daysAgo: 6, shop: 'Երևան կենտրոնական', fruit: 'Բանան',      quantity: 40, transportCost: 2500 },
-  { daysAgo: 6, shop: 'Երևան կենտրոնական', fruit: 'Ելակ',  quantity: 15, transportCost: 4000 },
-  { daysAgo: 6, shop: 'Վանաձորի շուկա', fruit: 'Խնձոր',       quantity: 30, transportCost: 5000 },
-  { daysAgo: 6, shop: 'Վանաձորի շուկա', fruit: 'Նուռ', quantity: 80, transportCost: 4500 },
-  { daysAgo: 6, shop: 'Գյումրու պլազա',    fruit: 'Խնձոր',       quantity: 25, transportCost: 6000 },
-  { daysAgo: 6, shop: 'Գյումրու պլազա',    fruit: 'Ձմերուկ',  quantity: 20, transportCost: 7000 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 50, transportCost: 3000 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 40, transportCost: 2500 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Ելակ',  quantity: 15, transportCost: 4000 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 30, transportCost: 5000 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 80, transportCost: 4500 },
+  { daysAgo: 6, shop: SHOP_NAME,    fruit: 'Խնձոր',       quantity: 25, transportCost: 6000 },
+  { daysAgo: 6, shop: SHOP_NAME,    fruit: 'Ձմերուկ',  quantity: 20, transportCost: 7000 },
 
   // 4 days ago — mid-week top-up
-  { daysAgo: 4, shop: 'Երևան կենտրոնական', fruit: 'Խաղող',       quantity: 30, transportCost: 3500 },
-  { daysAgo: 4, shop: 'Երևան կենտրոնական', fruit: 'Նուռ', quantity: 60, transportCost: 2500 },
-  { daysAgo: 4, shop: 'Վանաձորի շուկա', fruit: 'Բանան',      quantity: 25, transportCost: 5000 },
-  { daysAgo: 4, shop: 'Գյումրու պլազա',    fruit: 'Ելակ',  quantity: 10, transportCost: 6500 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Խաղող',       quantity: 30, transportCost: 3500 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 60, transportCost: 2500 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 25, transportCost: 5000 },
+  { daysAgo: 4, shop: SHOP_NAME,    fruit: 'Ելակ',  quantity: 10, transportCost: 6500 },
 
   // 2 days ago — weekend prep
-  { daysAgo: 2, shop: 'Երևան կենտրոնական', fruit: 'Ձմերուկ',  quantity: 15, transportCost: 3000 },
-  { daysAgo: 2, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 35, transportCost: 3000 },
-  { daysAgo: 2, shop: 'Վանաձորի շուկա', fruit: 'Խաղող',       quantity: 20, transportCost: 5000 },
-  { daysAgo: 2, shop: 'Գյումրու պլազա',    fruit: 'Բանան',      quantity: 30, transportCost: 6000 },
-  { daysAgo: 2, shop: 'Գյումրու պլազա',    fruit: 'Նուռ', quantity: 50, transportCost: 6000 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Ձմերուկ',  quantity: 15, transportCost: 3000 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 35, transportCost: 3000 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Խաղող',       quantity: 20, transportCost: 5000 },
+  { daysAgo: 2, shop: SHOP_NAME,    fruit: 'Բանան',      quantity: 30, transportCost: 6000 },
+  { daysAgo: 2, shop: SHOP_NAME,    fruit: 'Նուռ', quantity: 50, transportCost: 6000 },
 
   // today — fresh delivery
-  { daysAgo: 0, shop: 'Երևան կենտրոնական', fruit: 'Ելակ',  quantity: 20, transportCost: 4000 },
-  { daysAgo: 0, shop: 'Վանաձորի շուկա', fruit: 'Ձմերուկ',  quantity: 12, transportCost: 5500 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Ելակ', quantity: 20, transportCost: 4000 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Ձմերուկ', quantity: 12, transportCost: 5500 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Լոլիկ', quantity: 45, transportCost: 2200 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Վարագույն պղպեղ', quantity: 28, transportCost: 1800 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Կազմարինի կաղամբ', quantity: 35, transportCost: 1400 },
 ];
 
 /**
@@ -133,65 +142,68 @@ const STOCK_ARRIVALS = [
  */
 const SALE_ITEMS = [
   // 6 days ago
-  { daysAgo: 6, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 8 },
-  { daysAgo: 6, shop: 'Երևան կենտրոնական', fruit: 'Բանան',      quantity: 6 },
-  { daysAgo: 6, shop: 'Երևան կենտրոնական', fruit: 'Ելակ',  quantity: 3 },
-  { daysAgo: 6, shop: 'Վանաձորի շուկա', fruit: 'Խնձոր',       quantity: 5 },
-  { daysAgo: 6, shop: 'Վանաձորի շուկա', fruit: 'Նուռ', quantity: 12 },
-  { daysAgo: 6, shop: 'Գյումրու պլազա',    fruit: 'Խնձոր',       quantity: 4 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 8 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 6 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Ելակ',  quantity: 3 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 5 },
+  { daysAgo: 6, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 12 },
+  { daysAgo: 6, shop: SHOP_NAME,    fruit: 'Խնձոր',       quantity: 4 },
 
   // 5 days ago
-  { daysAgo: 5, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 10 },
-  { daysAgo: 5, shop: 'Երևան կենտրոնական', fruit: 'Բանան',      quantity: 8 },
-  { daysAgo: 5, shop: 'Երևան կենտրոնական', fruit: 'Նուռ', quantity: 6 },
-  { daysAgo: 5, shop: 'Վանաձորի շուկա', fruit: 'Նուռ', quantity: 10 },
-  { daysAgo: 5, shop: 'Վանաձորի շուկա', fruit: 'Խնձոր',       quantity: 4 },
-  { daysAgo: 5, shop: 'Գյումրու պլազա',    fruit: 'Ձմերուկ',  quantity: 3 },
-  { daysAgo: 5, shop: 'Գյումրու պլազա',    fruit: 'Խնձոր',       quantity: 5 },
+  { daysAgo: 5, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 10 },
+  { daysAgo: 5, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 8 },
+  { daysAgo: 5, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 6 },
+  { daysAgo: 5, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 10 },
+  { daysAgo: 5, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 4 },
+  { daysAgo: 5, shop: SHOP_NAME,    fruit: 'Ձմերուկ',  quantity: 3 },
+  { daysAgo: 5, shop: SHOP_NAME,    fruit: 'Խնձոր',       quantity: 5 },
 
   // 4 days ago
-  { daysAgo: 4, shop: 'Երևան կենտրոնական', fruit: 'Խաղող',       quantity: 7 },
-  { daysAgo: 4, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 9 },
-  { daysAgo: 4, shop: 'Երևան կենտրոնական', fruit: 'Ելակ',  quantity: 2 },
-  { daysAgo: 4, shop: 'Վանաձորի շուկա', fruit: 'Բանան',      quantity: 6 },
-  { daysAgo: 4, shop: 'Գյումրու պլազա',    fruit: 'Ելակ',  quantity: 2 },
-  { daysAgo: 4, shop: 'Գյումրու պլազա',    fruit: 'Ձմերուկ',  quantity: 4 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Խաղող',       quantity: 7 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 9 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Ելակ',  quantity: 2 },
+  { daysAgo: 4, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 6 },
+  { daysAgo: 4, shop: SHOP_NAME,    fruit: 'Ելակ',  quantity: 2 },
+  { daysAgo: 4, shop: SHOP_NAME,    fruit: 'Ձմերուկ',  quantity: 4 },
 
   // 3 days ago
-  { daysAgo: 3, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 12 },
-  { daysAgo: 3, shop: 'Երևան կենտրոնական', fruit: 'Նուռ', quantity: 14 },
-  { daysAgo: 3, shop: 'Երևան կենտրոնական', fruit: 'Խաղող',       quantity: 6 },
-  { daysAgo: 3, shop: 'Վանաձորի շուկա', fruit: 'Նուռ', quantity: 18 },
-  { daysAgo: 3, shop: 'Վանաձորի շուկա', fruit: 'Բանան',      quantity: 7 },
-  { daysAgo: 3, shop: 'Գյումրու պլազա',    fruit: 'Խնձոր',       quantity: 6 },
+  { daysAgo: 3, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 12 },
+  { daysAgo: 3, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 14 },
+  { daysAgo: 3, shop: SHOP_NAME, fruit: 'Խաղող',       quantity: 6 },
+  { daysAgo: 3, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 18 },
+  { daysAgo: 3, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 7 },
+  { daysAgo: 3, shop: SHOP_NAME,    fruit: 'Խնձոր',       quantity: 6 },
 
   // 2 days ago
-  { daysAgo: 2, shop: 'Երևան կենտրոնական', fruit: 'Ձմերուկ',  quantity: 4 },
-  { daysAgo: 2, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 11 },
-  { daysAgo: 2, shop: 'Երևան կենտրոնական', fruit: 'Բանան',      quantity: 9 },
-  { daysAgo: 2, shop: 'Վանաձորի շուկա', fruit: 'Խաղող',       quantity: 5 },
-  { daysAgo: 2, shop: 'Վանաձորի շուկա', fruit: 'Խնձոր',       quantity: 6 },
-  { daysAgo: 2, shop: 'Գյումրու պլազա',    fruit: 'Բանան',      quantity: 8 },
-  { daysAgo: 2, shop: 'Գյումրու պլազա',    fruit: 'Նուռ', quantity: 9 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Ձմերուկ',  quantity: 4 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 11 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 9 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Խաղող',       quantity: 5 },
+  { daysAgo: 2, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 6 },
+  { daysAgo: 2, shop: SHOP_NAME,    fruit: 'Բանան',      quantity: 8 },
+  { daysAgo: 2, shop: SHOP_NAME,    fruit: 'Նուռ', quantity: 9 },
 
   // yesterday
-  { daysAgo: 1, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 14 },
-  { daysAgo: 1, shop: 'Երևան կենտրոնական', fruit: 'Ձմերուկ',  quantity: 5 },
-  { daysAgo: 1, shop: 'Երևան կենտրոնական', fruit: 'Ելակ',  quantity: 4 },
-  { daysAgo: 1, shop: 'Երևան կենտրոնական', fruit: 'Նուռ', quantity: 10 },
-  { daysAgo: 1, shop: 'Վանաձորի շուկա', fruit: 'Նուռ', quantity: 12 },
-  { daysAgo: 1, shop: 'Վանաձորի շուկա', fruit: 'Բանան',      quantity: 5 },
-  { daysAgo: 1, shop: 'Վանաձորի շուկա', fruit: 'Խաղող',       quantity: 4 },
-  { daysAgo: 1, shop: 'Գյումրու պլազա',    fruit: 'Նուռ', quantity: 11 },
-  { daysAgo: 1, shop: 'Գյումրու պլազա',    fruit: 'Ելակ',  quantity: 2 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 14 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Ձմերուկ',  quantity: 5 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Ելակ',  quantity: 4 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 10 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Նուռ', quantity: 12 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 5 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Խաղող',       quantity: 4 },
+  { daysAgo: 1, shop: SHOP_NAME,    fruit: 'Նուռ', quantity: 11 },
+  { daysAgo: 1, shop: SHOP_NAME,    fruit: 'Ելակ',  quantity: 2 },
 
   // today
-  { daysAgo: 0, shop: 'Երևան կենտրոնական', fruit: 'Խնձոր',       quantity: 6 },
-  { daysAgo: 0, shop: 'Երևան կենտրոնական', fruit: 'Բանան',      quantity: 4 },
-  { daysAgo: 0, shop: 'Երևան կենտրոնական', fruit: 'Ելակ',  quantity: 3 },
-  { daysAgo: 0, shop: 'Վանաձորի շուկա', fruit: 'Ձմերուկ',  quantity: 2 },
-  { daysAgo: 0, shop: 'Վանաձորի շուկա', fruit: 'Խնձոր',       quantity: 5 },
-  { daysAgo: 0, shop: 'Գյումրու պլազա',    fruit: 'Նուռ', quantity: 6 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 6 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Բանան',      quantity: 4 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Ելակ',  quantity: 3 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Ձմերուկ',  quantity: 2 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Խնձոր',       quantity: 5 },
+  { daysAgo: 0, shop: SHOP_NAME,    fruit: 'Նուռ', quantity: 6 },
+  { daysAgo: 1, shop: SHOP_NAME, fruit: 'Լոլիկ', quantity: 8 },
+  { daysAgo: 0, shop: SHOP_NAME, fruit: 'Վարագույն պղպեղ', quantity: 4 },
+  { daysAgo: 3, shop: SHOP_NAME, fruit: 'Կազմարինի կաղամբ', quantity: 6 },
 ];
 
 async function main() {
@@ -203,13 +215,13 @@ async function main() {
   );
   if (existingShops.length > 0 && !RESET) {
     console.log(
-      'DB already has data. Pass --reset (or run `pnpm --filter strapi seed:reset`) to wipe and reseed.',
+      'Տվյալների բազայում արդեն կան գրառումներ։ Լրացնելու համար գործարկեք —reset կամ `pnpm --filter strapi seed:reset`։',
     );
     return;
   }
 
   if (RESET) {
-    console.log('Resetting existing data...');
+    console.log('Ջնջվում են հին տվյալները…');
     // Delete dependents first to keep relations happy.
     await deleteAll('sale-items');
     await deleteAll('stock-arrivals');
@@ -217,23 +229,23 @@ async function main() {
     await deleteAll('shops');
   }
 
-  console.log('Seeding shops...');
+  console.log('Լցվում են խանութները…');
   const shopByName = {};
   for (const def of SHOP_DEFS) {
     const { data } = await api('POST', '/api/shops', { data: def });
     shopByName[def.name] = data;
-    console.log(`  + Shop: ${data.name}${data.isActive ? '' : ' (չակտիվ)'}`);
+    console.log(`  + Խանութ՝ ${data.name}${data.isActive ? '' : ' (չակտիվ)'}`);
   }
 
-  console.log('Seeding fruits...');
+  console.log('Լցվում են մրգերն ու բանջարեղենը…');
   const fruitByName = {};
   for (const def of FRUIT_DEFS) {
     const { data } = await api('POST', '/api/fruits', { data: def });
     fruitByName[def.name] = data;
-    console.log(`  + Fruit: ${data.name} (${data.unit})`);
+    console.log(`  + Ապրանք՝ ${data.name} (${data.unit})`);
   }
 
-  console.log('Seeding stock arrivals...');
+  console.log('Լցվում են մուտքերը…');
   for (const a of STOCK_ARRIVALS) {
     const fruit = fruitByName[a.fruit];
     const shop = shopByName[a.shop];
@@ -250,11 +262,11 @@ async function main() {
       },
     });
     console.log(
-      `  + Arrival ${date} | ${a.shop} | ${a.quantity}${fruit.unit} ${a.fruit} @ ${unitCost} (transport ${a.transportCost})`,
+      `  + Մուտք ${date} | ${a.quantity}${fruit.unit} ${a.fruit} · ինքնարժեք ${unitCost} · տրանսպորտ ${a.transportCost}`,
     );
   }
 
-  console.log('Seeding sale items...');
+  console.log('Լցվում են վաճառքները…');
   for (const s of SALE_ITEMS) {
     const fruit = fruitByName[s.fruit];
     const shop = shopByName[s.shop];
@@ -270,17 +282,17 @@ async function main() {
       },
     });
     console.log(
-      `  + Sale    ${date} | ${s.shop} | ${s.quantity}${fruit.unit} ${s.fruit} @ ${pricePerUnit}`,
+      `  + Վաճառք ${date} | ${s.quantity}${fruit.unit} ${s.fruit} · գին ${pricePerUnit}`,
     );
   }
 
-  console.log('\nDone.');
+  console.log('\nԱվարտված է։');
   console.log(
-    `  shops:           ${SHOP_DEFS.length}\n  fruits:          ${FRUIT_DEFS.length}\n  stock arrivals:  ${STOCK_ARRIVALS.length}\n  sale items:      ${SALE_ITEMS.length}`,
+    `  խանութներ՝ ${SHOP_DEFS.length}\n  ապրանքներ՝ ${FRUIT_DEFS.length}\n  մուտքեր՝ ${STOCK_ARRIVALS.length}\n  վաճառքի գրառումներ՝ ${SALE_ITEMS.length}`,
   );
 }
 
 main().catch((err) => {
-  console.error('\nSeed failed:', err.message);
+  console.error('\nՍերմը ձախողվեց՝', err.message);
   process.exit(1);
 });

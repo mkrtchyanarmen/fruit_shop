@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ShopSelector } from "@/components/shop-selector"
+import { useShopContext } from "@/hooks/use-shop-context"
 
 const links = [
   { href: "/", label: "Գլխավոր" },
@@ -16,13 +17,14 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname()
+  const { shops } = useShopContext()
 
   return (
     <header className="border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-bold">Մրգերի խանութի կառավարում</h1>
-          <ShopSelector />
+          {shops.length > 1 ? <ShopSelector /> : null}
         </div>
         <nav className="flex flex-wrap gap-2">
           {links.map((link) => {
