@@ -1,6 +1,6 @@
 import type { Core } from '@strapi/strapi';
 
-export default ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewares => [
+export default (_params: Core.Config.Shared.ConfigParams): Core.Config.Middlewares => [
   'strapi::logger',
   'strapi::errors',
   {
@@ -21,9 +21,9 @@ export default ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Middlewar
     name: 'strapi::cors',
     config: {
       enabled: true,
-      origin: ['http://localhost:3000', env('NEXT_PUBLIC_URL', '')],
+      origin: '*',
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
-      headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+      headers: '*',
       keepHeaderOnError: true,
     },
   },
